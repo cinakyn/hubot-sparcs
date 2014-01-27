@@ -1,3 +1,8 @@
+hubot-sparcs
+============
+
+스팍스 slack 채널에서 사용할 hubot
+
 # Hubot
 
 This is a version of GitHub's Campfire bot, hubot. He's pretty cool.
