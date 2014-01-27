@@ -24,7 +24,11 @@
     "hubot-scripts": ">= 2.5.0 < 3.0.0",
     "hubot-slack": "~1.5.2",
     "soupselect": "~0.2.0",
-    "htmlparser": "~1.7.7"
+    "htmlparser": "~1.7.7",
+    "chess": "~0.1.8",
+    "underscore": "~1.5.2",
+    "validator": "~3.2.0",
+    "underscore.string": "~2.3.3"
   },
   "engines": {
     "node": ">= 0.8.x",
