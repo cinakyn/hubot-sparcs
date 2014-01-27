@@ -62,7 +62,7 @@ class Game
   guessWord: (guess) ->
     if guess == @word
       @answerLetters = @wordLetters
-      this.correctGuess("Yes, that's correct")
+      this.correctGuess("정답입니다!")
     else
       this.incorrectGuess("Sorry, the word is not #{guess}")
 
