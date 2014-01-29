@@ -144,7 +144,8 @@ parse_rank_table = (body, message)->
   return result
 
 insert_movie_list_to_db = (movie_list, message)->
-  message.send "rank table parse done"
+  
+  message.send "rank table parse done" + movie_list.length
   result_set = {}
   callback = (detail)->
     result_set[detail.title] = detail
