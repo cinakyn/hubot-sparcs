@@ -144,10 +144,52 @@ parse_rank_table = (body, message)->
   return result
 
 insert_movie_list_to_db = (movie_list, message)->
-  
-  message.send "rank table parse done"
-  message.send movie_list[0].initials
+  message.send "rank table parse done" + movie_list[0].initials
   result_set = {}
+  callback = (detail)->
+    result_set[detail.title] = detail
+    if (movie_list.length > 0)
+      get_movie_detail(movie_list.pop(), message, callback)
+    else
+      message.send "Create table..."
+      pg.connect(process.env.DATABASE_URL, (err, client)->
+        message.send err if err
+        ct_query = client.query('''
+          CREATE TABLE IF NOT EXISTS movies(
+            id      SERIAL PRIMARY KEY,
+            title   CHAR(30) UNIQUE,
+            genre   text,
+            nation  CHAR(10),
+            photo   CHAR(100),
+            story   text,
+            initials  CHAR(30),
+            answer    CHAR(30)
+          )
+          ''', 
+          (error, result)->
+            return message.send error if error
+            for title, movie of result_set
+              sql_list = ["INSERT INTO movies (title, genre, nation, photo, story, initials, answer) VALUES "]
+              sql_list.push("('")
+              sql_list.push([
+                escape_sql(movie.title),
+                escape_sql(movie.genre),
+                escape_sql(movie.nation),
+                escape_sql(movie.photo),
+                escape_sql(movie.story),
+                escape_sql(movie.initials),
+                escape_sql(movie.answer)
+              ].join("', '"))
+              sql_list.push("')")
+              query = client.query(sql_list.join(''))
+              query.on('error', (error)->
+                if (error.code == "23505")
+                  return
+                else 
+                  message.send error
+              )
+        )
+      )
   get_movie_detail(movie_list.pop(), message, callback)
 
 get_movie_detail = (movie, message, callback)->
