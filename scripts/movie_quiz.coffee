@@ -145,7 +145,8 @@ parse_rank_table = (body, message)->
 
 insert_movie_list_to_db = (movie_list, message)->
   
-  message.send "rank table parse done" + movie_list.length
+  message.send "rank table parse done"
+  message.send movie_list[0].initial
   result_set = {}
   callback = (detail)->
     result_set[detail.title] = detail
@@ -191,7 +192,6 @@ insert_movie_list_to_db = (movie_list, message)->
               )
         )
       )
-  message.send(movie_list.length)
   get_movie_detail(movie_list.pop(), message, callback)
 
 get_movie_detail = (movie, message, callback)->
@@ -205,6 +205,7 @@ get_movie_detail = (movie, message, callback)->
     message.send detail.title
     temp = ()->
       callback(detail)
+    message.send detail.title
     setTimeout(temp, 10000)
 
 parse_movie = (body)->
