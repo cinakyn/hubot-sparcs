@@ -122,6 +122,7 @@ update_movie_quiz = (message)->
   loop_callback()
 
 parse_rank_table = (body, message)->
+  message.send "parse rank table..."
   html_handler = new HTMLParser.DefaultHandler((()->), ignoreWhitespace: true)
   html_parser = new HTMLParser.Parser html_handler
   html_parser.parseComplete body
@@ -137,6 +138,7 @@ parse_rank_table = (body, message)->
         link : link 
         title : title 
         reserve_per : reserve_per 
+      message.send m.title
       if reserve_per >= 9.0
         m.title = sanitize_title(m.title)
         m = add_initials(m)
