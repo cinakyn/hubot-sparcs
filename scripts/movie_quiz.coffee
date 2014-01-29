@@ -146,7 +146,7 @@ parse_rank_table = (body, message)->
 insert_movie_list_to_db = (movie_list, message)->
   
   message.send "rank table parse done"
-  message.send movie_list[0].initial
+  message.send movie_list[0].initials
   result_set = {}
   get_movie_detail(movie_list.pop(), message, callback)
 
