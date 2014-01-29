@@ -139,7 +139,8 @@ parse_rank_table = (body, message)->
         reserve_per : reserve_per 
       if m.reserve_per >= 9.0
         m.title = sanitize_title(m.title)
-        m = add_initials(m)
+        m.initials = get_initials(m.title)
+        m.answer = get_answer(m.title)
         result.push(m)
   return result
 
@@ -167,6 +168,7 @@ insert_movie_list_to_db = (movie_list, message)->
           (error, result)->
             return message.send error if error
             for title, movie of result_set
+              message.send movie.initials
               sql_list = ["INSERT INTO movies (title, genre, nation, photo, story, initials, answer) VALUES "]
               sql_list.push("('")
               sql_list.push([
@@ -234,26 +236,33 @@ sanitize_title = (title)->
   title = title.replace(/\ +/g, ' ')
   return title
 
-add_initials = (movie)->
+get_initials = (movie)->
   initial_list = []
-  answer_list = []
   for c in movie.title
     if c.match(/[가-힣]/)
       initial_list.push(get_initial(c))
-      answer_list.push(c)
     else if c.match(/[0-9]/)
       initial_list.push(NUMBER_INITIAL[c])
-      answer_list.push(NUMBER_ANSWER[c])
     else if c.match(' ')
       initial_list.push(c)
-      answer_list.push(c)
     else if c.match(/[a-z]/i)
       initial_list.push(ALPHABET_INITIAL[c])
-      answer_list.push(ALPHABET_ANSWER[c])
-  movie.initials = initial_list.join('')
-  movie.answer = answer_list.join('')
  
-  return movie
+  return initial_list.join('') 
+
+get_answer = (movie)->
+  answer_list = []
+  for c in movie.title
+    if c.match(/[가-힣]/)
+      answer_list.push(c)
+    else if c.match(/[0-9]/)
+      answer_list.push(NUMBER_ANSWER[c])
+    else if c.match(' ')
+      answer_list.push(c)
+    else if c.match(/[a-z]/i)
+      answer_list.push(ALPHABET_ANSWER[c])
+ 
+  return answer_list.join('') 
 
 
 get_initial = (c)->
