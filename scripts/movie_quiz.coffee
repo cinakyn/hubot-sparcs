@@ -136,14 +136,14 @@ update_movie_quiz = (message)->
       message.send url
       m1 = {title : "극장판 포켓몬스터 베스트위시「신의 속도 게노세크트，뮤츠의 각성」", link : "http://movie.naver.com/movie/bi/mi/basic.nhn?code=109466", reserve_per : '50'}
       m2 = {title : " 수상한 VS 그녀", link : "http://movie.naver.com/movie/bi/mi/basic.nhn?code=107924", reserve_per : '50'}
-      insert_movie_list_to_db([m1, m2], message)
-#     message.http(url)
-#       .encoding('binary')
-#       .get() (err, response, body)->
-#         return message.send "http연결에 실패했습니다." + err if err 
-#         movie_list = parse_rank_table(body, message)
-#         insert_movie_list_to_db(movie_list, message)
-#     date = get_last_week(date)
+      #insert_movie_list_to_db([m1, m2], message)
+      message.http(url)
+        .encoding('binary')
+        .get() (err, response, body)->
+          return message.send "http연결에 실패했습니다." + err if err 
+          movie_list = parse_rank_table(body, message)
+          insert_movie_list_to_db(movie_list, message)
+      date = get_last_week(date)
       setTimeout(loop_callback, 60000)
   loop_callback()
 
