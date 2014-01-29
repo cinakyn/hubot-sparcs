@@ -138,10 +138,6 @@ parse_rank_table = (body, message)->
         title : title 
         reserve_per : reserve_per 
       if m.reserve_per >= 9.0
-        m.title = sanitize_title(m.title)
-        m.initials = get_initials(m.title)
-        message.send m.initials
-        m.answer = get_answer(m.title)
         result.push(m)
   return result
 
@@ -169,7 +165,6 @@ insert_movie_list_to_db = (movie_list, message)->
           (error, result)->
             return message.send error if error
             for title, movie of result_set
-              message.send movie.initials
               sql_list = ["INSERT INTO movies (title, genre, nation, photo, story, initials, answer) VALUES "]
               sql_list.push("('")
               sql_list.push([
@@ -198,7 +193,9 @@ get_movie_detail = (movie, message, callback)->
     return message.send "http연결에 실패했습니다." + error if error
 
     detail = parse_movie(body)
-    detail.title = movie.title
+    detail.title = sanitize_title(movie.title)
+    detail.initials = get_initials(detail.title)
+    detail.answer = get_answer(detail.title)
     temp = ()->
       callback(detail)
     setTimeout(temp, 10000)
@@ -237,9 +234,9 @@ sanitize_title = (title)->
   title = title.replace(/\ +/g, ' ')
   return title
 
-get_initials = (movie)->
+get_initials = (title)->
   initial_list = []
-  for c in movie.title
+  for c in title
     if c.match(/[가-힣]/)
       initial_list.push(get_initial(c))
     else if c.match(/[0-9]/)
@@ -251,9 +248,9 @@ get_initials = (movie)->
  
   return initial_list.join('') 
 
-get_answer = (movie)->
+get_answer = (title)->
   answer_list = []
-  for c in movie.title
+  for c in title 
     if c.match(/[가-힣]/)
       answer_list.push(c)
     else if c.match(/[0-9]/)
