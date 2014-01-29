@@ -137,7 +137,7 @@ parse_rank_table = (body, message)->
         link : link 
         title : title 
         reserve_per : reserve_per 
-      if reserve_per >= 9.0
+      if m.reserve_per >= 9.0
         m.title = sanitize_title(m.title)
         m = add_initials(m)
         message.send m.initials
@@ -236,7 +236,7 @@ sanitize_title = (title)->
   title = title.replace(/\ +/g, ' ')
   return title
 
-get_initials = (movie)->
+add_initials = (movie)->
   initial_list = []
   answer_list = []
   for c in movie.title
