@@ -117,7 +117,7 @@ update_movie_quiz = (message)->
           return message.send "http연결에 실패했습니다." + error if error 
           movie_list = parse_rank_table(body, message)
           insert_movie_list_to_db(movie_list, message)
-      date = get_last_week(get_last_week(date))
+      date = get_last_week(date)
       setTimeout(loop_callback, 60000)
   loop_callback()
 
