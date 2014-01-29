@@ -12,7 +12,7 @@
 #
 # Commands:
 #   hubot quiz - start movie quiz
-#   hubot quiz update <from> - update newest quiz (매우 무거움! from은 YYYY-MM-dd 형식으로)
+#   hubot quiz update <from>[ <to>]- update newest quiz (매우 무거움! 날짜는 YYYY-MM-dd 형식으로)
 #   hubot quiz pass - pass the quiz
 #   hubot quiz hint - get hint
 #   hubot quiz <answer> - test which answer is correct or not
@@ -27,8 +27,8 @@ pg          = require('pg')
 translatorE2U = new Iconv('euc-kr', 'utf-8')
 MOVIE_NAVER_URL = "http://movie.naver.com/movie/sdb/rank/rreserve.nhn?date="
 MOVIE_NAVER_DOMAIN = "http://movie.naver.com"
-NUMBER_INITIAL = ['ㅇ', 'ㅇ', 'ㅅ', 'ㅅ', 'ㅇ', 'ㅇ', 'ㅊ', 'ㅍ', 'ㄱ']
-NUMBER_ANSWER = ['일', '이', '삼', '사', '오', '육', '칠', '팔', '구']
+NUMBER_INITIAL = ['ㅇ', 'ㅇ', 'ㅇ', 'ㅅ', 'ㅅ', 'ㅇ', 'ㅇ', 'ㅊ', 'ㅍ', 'ㄱ']
+NUMBER_ANSWER = ['영', '일', '이', '삼', '사', '오', '육', '칠', '팔', '구']
 ALPHABET_INITIAL= 
   a : 'ㅇㅇ'
   b : 'ㅂ'
@@ -85,9 +85,30 @@ ALPHABET_ANSWER=
   z : '지'
 
 module.exports = (robot)->
-  robot.respond /quiz update (\d{4}-\d{2}-\d{2})/i, (message)->
+  robot.respond /quiz update (\d{4}-\d{2}-\d{2}) ?(\d{4}-\d{2}-\d{2})?/i, (message)->
     message.send '네이버가 자주 접속하면 404를 줘서 60초에 한 주씩 업데이트하므로 매우 느립니다.'
-    update_movie_quiz(message)
+    pg.connect(process.env.DATABASE_URL, (err, client, done)->
+      return message.send err if err
+      ct_query = client.query(
+        '''
+          CREATE TABLE IF NOT EXISTS movies(
+            id            SERIAL PRIMARY KEY,
+            title         CHAR(60) UNIQUE,
+            reserve_per   float,
+            genre         text,
+            nation        CHAR(10),
+            photo         CHAR(200),
+            story         text,
+            initials      CHAR(60),
+            answer        CHAR(60)
+          )
+        ''', 
+        (err, result)->
+          done()
+          return message.send err if err
+          update_movie_quiz(message)
+      )
+    )
 
 convertE2U = (binary_euc)->
   buf = new Buffer(binary_euc.length)
@@ -99,7 +120,10 @@ get_last_week = (date)->
   return lastWeek
 
 update_movie_quiz = (message)->
-  date = new Date()
+  if message.match[2]
+    date = new Date(message.match[2])
+  else
+    date = new Date()
   from_date_split = message.match[1].split('-')
   loop_callback = ()->
     if (date.getFullYear() >= from_date_split[0] or (date.getFullYear() == from_date_split[0] and date.getMoth() + 1 >= from_date_split[1]))
@@ -110,11 +134,13 @@ update_movie_quiz = (message)->
         ('0' + date.getDate()).slice(-2)
       ].join('')
       message.send url
-      #insert_movie_list_to_db([add_initials({title : "겨울 왕국", link : "http://movie.naver.com/movie/bi/mi/basic.nhn?code=100931", reserve_per : '50'}, message), add_initials({title : "수상한 그녀", link : "http://movie.naver.com/movie/bi/mi/basic.nhn?code=107924", reserve_per : '50'}, message)], message)
+      m1 = {title : "극장판 포켓몬스터 베스트위시「신의 속도 게노세크트，뮤츠의 각성」", link : "http://movie.naver.com/movie/bi/mi/basic.nhn?code=109466", reserve_per : '50'}
+      m2 = {title : "수상한 그녀", link : "http://movie.naver.com/movie/bi/mi/basic.nhn?code=107924", reserve_per : '50'}
+#     insert_movie_list_to_db([m1, m2], message)
       message.http(url)
         .encoding('binary')
-        .get() (error, response, body)->
-          return message.send "http연결에 실패했습니다." + error if error 
+        .get() (err, response, body)->
+          return message.send "http연결에 실패했습니다." + err if err 
           movie_list = parse_rank_table(body, message)
           insert_movie_list_to_db(movie_list, message)
       date = get_last_week(date)
@@ -142,57 +168,54 @@ parse_rank_table = (body, message)->
   return result
 
 insert_movie_list_to_db = (movie_list, message)->
-  result_set = {}
+  result_list = []
   callback = (detail)->
-    result_set[detail.title] = detail
+    result_list.push(detail)
     if (movie_list.length > 0)
       get_movie_detail(movie_list.pop(), message, callback)
     else
-      pg.connect(process.env.DATABASE_URL, (err, client)->
-        message.send err if err
-        ct_query = client.query('''
-          CREATE TABLE IF NOT EXISTS movies(
-            id      SERIAL PRIMARY KEY,
-            title   CHAR(30) UNIQUE,
-            genre   text,
-            nation  CHAR(10),
-            photo   CHAR(100),
-            story   text,
-            initials  CHAR(30),
-            answer    CHAR(30)
+      counter = result_list.length
+      pg.connect(process.env.DATABASE_URL, (err, client, done)->
+        return message.send err if err
+        for movie in result_list
+          sql_list = ["INSERT INTO movies (title, reserve_per, genre, nation, photo, story, initials, answer) VALUES "]
+          sql_list.push("('")
+          sql_list.push([
+            escape_sql(movie.title),
+            escape_sql(movie.reserve_per),
+            escape_sql(movie.genre),
+            escape_sql(movie.nation),
+            escape_sql(movie.photo),
+            escape_sql(movie.story),
+            escape_sql(movie.initials),
+            escape_sql(movie.answer)
+          ].join("', '"))
+          sql_list.push("')")
+          message.send movie.title + "," + movie.initials + "," + movie.answer
+          query = client.query(sql_list.join(''), (err, result)->
+            counter -= 1
+            if counter == 0
+              message.send "done!"
+              done()
+            else
+              message.send counter + "left"
+            if err
+              if (err.code != "23505")
+                message.send JSON.stringify(err, null, '\t')
+              else
+                message.send JSON.stringify(err, null, '\t')
+              return
+            message.send JSON.stringify(result, null, '\t')
           )
-          ''', 
-          (error, result)->
-            return message.send error if error
-            for title, movie of result_set
-              sql_list = ["INSERT INTO movies (title, genre, nation, photo, story, initials, answer) VALUES "]
-              sql_list.push("('")
-              sql_list.push([
-                escape_sql(movie.title),
-                escape_sql(movie.genre),
-                escape_sql(movie.nation),
-                escape_sql(movie.photo),
-                escape_sql(movie.story),
-                escape_sql(movie.initials),
-                escape_sql(movie.answer)
-              ].join("', '"))
-              sql_list.push("')")
-              query = client.query(sql_list.join(''))
-              query.on('error', (error)->
-                if (error.code == "23505")
-                  return
-                else 
-                  message.send error
-              )
-        )
       )
   get_movie_detail(movie_list.pop(), message, callback)
 
 get_movie_detail = (movie, message, callback)->
-  message.http(movie.link).get() (error, response, body)->
-    return message.send "http연결에 실패했습니다." + error if error
+  message.http(movie.link).get() (err, response, body)->
+    return message.send "http연결에 실패했습니다." + err if err
 
     detail = parse_movie(body)
+    detail.reserve_per = movie.reserve_per
     detail.title = sanitize_title(movie.title)
     detail.initials = get_initials(detail.title)
     detail.answer = get_answer(detail.title)
@@ -207,7 +230,7 @@ parse_movie = (body)->
   info_spec = Select(html_handler.dom, '.info_spec')[0]
   genre = parse_genre(info_spec.children[0])
   nation = Select(info_spec.children[1], 'a')[0].children[0].data
-  story = Select(html_handler.dom, '.con_tx')[0].children[0].data
+  story = parse_story(Select(html_handler.dom, '.con_tx')[0])
   photo = Select(html_handler.dom, '._Img')[0].attribs.src
   m =
     genre : genre
@@ -215,6 +238,15 @@ parse_movie = (body)->
     story : story
     photo : photo
   return m
+
+parse_story = (story_dom)->
+  result = []
+  for c in story_dom.children
+    if (c.type == 'tag' and c.name == 'br')
+      result.push('\n')
+    else
+      result.push(c.data)
+  return result.join('')
 
 parse_genre = (genre_dom)->
   result = []
@@ -224,7 +256,7 @@ parse_genre = (genre_dom)->
 
 escape_sql = (str)->
   if (str)
-    return str.replace(/(['"])/g, "\\$1")
+    return str.replace(/'/g, "''")
   else
     str
 
@@ -232,6 +264,7 @@ sanitize_title = (title)->
   title = title.replace(/[^(가-힣ㄱ-ㅎㅏ-ㅣa-zA-Z0-9)]/gi, ' ')
   title = title.replace(/3D/g, '')
   title = title.replace(/\ +/g, ' ')
+  title = title.replace(/\ $/g, '')
   return title
 
 get_initials = (title)->
