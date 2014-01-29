@@ -110,11 +110,11 @@ update_movie_quiz = (message)->
         ('0' + date.getDate()).slice(-2)
       ].join('')
       message.send url
+      #insert_movie_list_to_db([add_initials({title : "겨울 왕국", link : "http://movie.naver.com/movie/bi/mi/basic.nhn?code=100931", reserve_per : '50'}, message), add_initials({title : "수상한 그녀", link : "http://movie.naver.com/movie/bi/mi/basic.nhn?code=107924", reserve_per : '50'}, message)], message)
       message.http(url)
         .encoding('binary')
         .get() (error, response, body)->
           return message.send "http연결에 실패했습니다." + error if error 
-          #insert_movie_list_to_db([{title : "겨울 왕국", link : "http://movie.naver.com/movie/bi/mi/basic.nhn?code=100931", reserve_per : '50'}, {title : "수상한 그녀", link : "http://movie.naver.com/movie/bi/mi/basic.nhn?code=107924", reserve_per : '50'}], message)
           movie_list = parse_rank_table(body, message)
           insert_movie_list_to_db(movie_list, message)
       date = get_last_week(get_last_week(date))
@@ -144,7 +144,6 @@ parse_rank_table = (body, message)->
   return result
 
 insert_movie_list_to_db = (movie_list, message)->
-  message.send "rank table parse done" + movie_list[0].initials
   result_set = {}
   callback = (detail)->
     result_set[detail.title] = detail
@@ -200,10 +199,8 @@ get_movie_detail = (movie, message, callback)->
 
     detail = parse_movie(body)
     detail.title = movie.title
-    message.send detail.title
     temp = ()->
       callback(detail)
-    message.send detail.title
     setTimeout(temp, 10000)
 
 parse_movie = (body)->
@@ -258,6 +255,8 @@ add_initials = (movie)->
       answer_list.push(ALPHABET_ANSWER[c])
   movie.initials = initial_list.join('')
   movie.answer = answer_list.join('')
+ 
+  return movie
 
 
 get_initial = (c)->
