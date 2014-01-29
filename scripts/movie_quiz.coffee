@@ -150,6 +150,7 @@ insert_movie_list_to_db = (movie_list, message)->
       get_movie_detail(movie_list.pop(), message, callback)
     else
       pg.connect(process.env.DATABASE_URL, (err, client)->
+        message.send err if err
         ct_query = client.query('''
           CREATE TABLE IF NOT EXISTS movies(
             id      SERIAL PRIMARY KEY,
