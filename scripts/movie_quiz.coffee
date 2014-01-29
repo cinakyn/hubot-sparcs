@@ -150,7 +150,6 @@ insert_movie_list_to_db = (movie_list, message)->
     if (movie_list.length > 0)
       get_movie_detail(movie_list.pop(), message, callback)
     else
-      message.send "Create table..."
       pg.connect(process.env.DATABASE_URL, (err, client)->
         message.send err if err
         ct_query = client.query('''
@@ -192,8 +191,6 @@ insert_movie_list_to_db = (movie_list, message)->
   get_movie_detail(movie_list.pop(), message, callback)
 
 get_movie_detail = (movie, message, callback)->
-  message.send "get movie detail..."
-  message.send movie.link
   message.http(movie.link).get() (error, response, body)->
     return message.send "http연결에 실패했습니다." + error if error
 
