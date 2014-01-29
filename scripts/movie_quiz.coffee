@@ -122,7 +122,6 @@ update_movie_quiz = (message)->
   loop_callback()
 
 parse_rank_table = (body, message)->
-  message.send "parse rank table..."
   html_handler = new HTMLParser.DefaultHandler((()->), ignoreWhitespace: true)
   html_parser = new HTMLParser.Parser html_handler
   html_parser.parseComplete body
@@ -138,7 +137,6 @@ parse_rank_table = (body, message)->
         link : link 
         title : title 
         reserve_per : reserve_per 
-      message.send m.title
       if reserve_per >= 9.0
         m.title = sanitize_title(m.title)
         m = add_initials(m)
@@ -146,12 +144,14 @@ parse_rank_table = (body, message)->
   return result
 
 insert_movie_list_to_db = (movie_list, message)->
+  message.send "rank table parse done"
   result_set = {}
   callback = (detail)->
     result_set[detail.title] = detail
     if (movie_list.length > 0)
       get_movie_detail(movie_list.pop(), message, callback)
     else
+      message.send "Create table..."
       pg.connect(process.env.DATABASE_URL, (err, client)->
         message.send err if err
         ct_query = client.query('''
@@ -194,6 +194,7 @@ insert_movie_list_to_db = (movie_list, message)->
   get_movie_detail(movie_list.pop(), message, callback)
 
 get_movie_detail = (movie, message, callback)->
+  message.send "get movie detail..."
   message.http(movie.link).get() (error, response, body)->
     return message.send "http연결에 실패했습니다." + error if error
 
