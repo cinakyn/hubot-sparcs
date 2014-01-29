@@ -191,7 +191,6 @@ insert_movie_list_to_db = (movie_list, message)->
             escape_sql(movie.answer)
           ].join("', '"))
           sql_list.push("')")
-          message.send movie.title + "," + movie.initials + "," + movie.answer
           query = client.query(sql_list.join(''), (err, result)->
             counter -= 1
             if counter == 0
@@ -201,8 +200,6 @@ insert_movie_list_to_db = (movie_list, message)->
               message.send counter + "left"
             if err
               if (err.code != "23505")
-                message.send JSON.stringify(err, null, '\t')
-              else
                 message.send JSON.stringify(err, null, '\t')
               return
             message.send JSON.stringify(result, null, '\t')
