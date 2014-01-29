@@ -190,11 +190,12 @@ insert_movie_list_to_db = (movie_list, message)->
               )
         )
       )
-
+  message.send(movie_list.length)
   get_movie_detail(movie_list.pop(), message, callback)
 
 get_movie_detail = (movie, message, callback)->
   message.send "get movie detail..."
+  message.send movie.link
   message.http(movie.link).get() (error, response, body)->
     return message.send "http연결에 실패했습니다." + error if error
 
@@ -203,7 +204,6 @@ get_movie_detail = (movie, message, callback)->
     message.send detail.title
     temp = ()->
       callback(detail)
-    message.send movie.link
     setTimeout(temp, 10000)
 
 parse_movie = (body)->
