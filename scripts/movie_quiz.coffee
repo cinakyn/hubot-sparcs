@@ -140,6 +140,7 @@ parse_rank_table = (body, message)->
       if m.reserve_per >= 9.0
         m.title = sanitize_title(m.title)
         m.initials = get_initials(m.title)
+        message.send m.initials
         m.answer = get_answer(m.title)
         result.push(m)
   return result
