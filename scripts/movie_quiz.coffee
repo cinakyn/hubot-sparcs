@@ -117,7 +117,7 @@ update_movie_quiz = (message)->
           movie_list = parse_rank_table(body, message)
           insert_movie_list_to_db(movie_list, message)
       date = get_last_week(get_last_week(date))
-      setTimeout(loop_callback, 100000)
+      setTimeout(loop_callback, 60000)
   loop_callback()
 
 parse_rank_table = (body, message)->
@@ -199,7 +199,7 @@ get_movie_detail = (movie, message, callback)->
     message.send detail.title
     temp = ()->
       callback(detail)
-    setTimeout(temp, 1500)
+    setTimeout(temp, 10000)
 
 parse_movie = (body)->
   html_handler = new HTMLParser.DefaultHandler((()->), ignoreWhitespace: true)
