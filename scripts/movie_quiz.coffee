@@ -109,6 +109,7 @@ update_movie_quiz = (message)->
         ('0' + (date.getMonth() + 1)).slice(-2),
         ('0' + date.getDate()).slice(-2)
       ].join('')
+      message.send url
       message.http(url)
         .encoding('binary')
         .get() (error, response, body)->
@@ -199,6 +200,7 @@ get_movie_detail = (movie, message, callback)->
     message.send detail.title
     temp = ()->
       callback(detail)
+    message.send movie.link
     setTimeout(temp, 10000)
 
 parse_movie = (body)->
