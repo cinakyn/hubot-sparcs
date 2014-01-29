@@ -202,7 +202,7 @@ insert_movie_list_to_db = (movie_list, message)->
               if (err.code != "23505")
                 message.send JSON.stringify(err, null, '\t')
               return
-            message.send JSON.stringify(result, null, '\t')
+#message.send JSON.stringify(result, null, '\t')
           )
       )
   get_movie_detail(movie_list.pop(), message, callback)
