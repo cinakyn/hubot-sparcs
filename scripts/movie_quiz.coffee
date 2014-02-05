@@ -11,11 +11,10 @@
 #   None
 #
 # Commands:
-#   hubot quiz - start movie quiz
 #   hubot quiz update <from>[ <to>]- update newest quiz (매우 무거움! 날짜는 YYYY-MM-dd 형식으로)
-#   hubot quiz pass - pass the quiz
+#   hubot quiz start - start movie quiz 
 #   hubot quiz hint - get hint
-#   hubot quiz <answer> - test which answer is correct or not
+#   hubot quiz <answer> - guess the answer 
 #
 # Author:
 #   bbashong
@@ -83,9 +82,9 @@ ALPHABET_ANSWER=
   x : '엑스'
   y : '와이'
   z : '지'
+gameDic = {}
 
 module.exports = (robot)->
-  gameDic = {}
   robot.respond /quiz update (\d{4}-\d{2}-\d{2}) ?(\d{4}-\d{2}-\d{2})?/i, (message)->
     message.send '네이버가 자주 접속하면 404를 줘서 60초에 한 주씩 업데이트하므로 매우 느립니다.'
     pg.connect(process.env.DATABASE_URL, (err, client, done)->
@@ -136,35 +135,94 @@ module.exports = (robot)->
   robot.respond /quiz hint/i, (message)->
     hint(message)
 
-  robot.respond /quiz (.+)/i, (message)->
+  robot.respond /quiz ((?!start|remind|hint|update).*)/i, (message)->
     guess(message)
 
 class Game
 
-  constructor: (@title, @initials, @answer) ->
+  constructor: (@title, @initials, @answer, @reseve_per, @nation, @genre, @photo, @story) ->
     @hintLevel = 0
 
   print_quiz: (message)->
     if @hintLevel > 0
-      outInitials = @initials.replace(/\ /gi, '')
-    else
       outInitials = @initials
-   message.send '영화 자음퀴즈'
-   message.send Array(outInitials.length + 5).join('+')
-   message.send '+ ' + outInitials + ' +'
-   message.send Array(outInitials.length + 5).join('+')
+    else
+      outInitials = @initials.replace(/\ /gi, '')
+    message.send '문제 : [' + outInitials + ']'
+
+  increase_hint: ()->
+    if (@hintLevel < 4)
+      @hintLevel += 1
+      return true
+    return false
+
+  print_hint: (message)->
+    switch @hintLevel
+      when 1
+        message.send '띄어쓰기 힌트'
+        @print_quiz(message)
+      when 2
+        message.send '장르 : ' + @genre
+        message.send '국가 : ' + @nation
+      when 3
+        message.send @photo
+      when 4
+        message.send @story
+
+  guess: (message, guess_word)->
+    if (guess_word.replace(/\ /gi, '') == @answer.replace(/\ /gi, ''))
+      message.send '짝짝짝'
+      message.send message.message.user.name + '님 정답입니다!'
+      message.send '정답 : ' + @title + '(' + @answer + ')'
+      return true
+    else
+      message.send message.message.user.name + '님 오답입니다.'
+      return false
+
 
 start_game = (message)->
   pg.connect process.env.DATABASE_URL, (err, client, done)->
     return message.send err if err
-    client.query 'SELECT id, title, initials, answer FROM movies ORDER BY random() LIMIT 1', (err, result)->
+    client.query 'SELECT * FROM movies ORDER BY random() LIMIT 1', (err, result)->
       message.send err if err
-      game = Game(result.title, result.initials, result.answer)
+      game = new Game(
+        result.rows[0].title.replace(/\ *$/gi, ''),
+        result.rows[0].initials.replace(/\ *$/gi, ''),
+        result.rows[0].answer.replace(/\ *$/gi, '')
+        result.rows[0].reserve_per
+        result.rows[0].nation.replace(/\ *$/gi, '')
+        result.rows[0].genre.replace(/\ *$/gi, '')
+        result.rows[0].photo.replace(/\ *$/gi, '')
+        result.rows[0].story.replace(/\ *$/gi, '')
+      )
       done()
       room = message.message.user.room
       gameDic[room] = game
       game.print_quiz(message)
 
+hint = (message)->
+  room = message.message.user.room
+  game = gameDic[room]
+  if not game
+    return message.send '진행중인 게임이 없습니다.'
+  if game.increase_hint()
+    game.print_hint(message)
+  else
+    message.send '더 이상 힌트가 없습니다.'
+
+guess = (message)->
+  room = message.message.user.room
+  game = gameDic[room]
+  if not game
+    return message.send '진행중인 게임이 없습니다.'
+  guess_word = message.match[1]
+  if not guess_word
+    return message.send '알 수 없는 오류'
+  isCorrect = game.guess(message, guess_word)
+  if isCorrect
+    gameDic[room] = undefined
+
+  
 
 convertE2U = (binary_euc)->
   buf = new Buffer(binary_euc.length)
