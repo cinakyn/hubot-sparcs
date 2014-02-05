@@ -109,6 +109,23 @@ module.exports = (robot)->
           update_movie_quiz(message)
       )
     )
+  
+  robot.respond /quiz resanitize/i, (message)->
+    message.send 're-santizing...'
+    pg.connect(process.env.DATABASE_URL, (err, client, done)->
+      return message.send err if err
+      client.query('SELECT id, title FROM movies', (err, result)->
+        for r in result.rows
+          oriTitle = r.title
+          id = r.id
+          title = sanitize_title(oriTitle)
+          initials = get_initials(title)
+          answer = get_answer(title)
+          client.query("UPDATE movies SET title='" + title + "', initials='" + initials + "', answer='" + answer + "' WHERE id=" + id, (err, result)->
+          )
+      )
+    )
+
 
 convertE2U = (binary_euc)->
   buf = new Buffer(binary_euc.length)
@@ -258,7 +275,9 @@ escape_sql = (str)->
     str
 
 sanitize_title = (title)->
-  title = title.replace(/[^(가-힣ㄱ-ㅎㅏ-ㅣa-zA-Z0-9)]/gi, ' ')
+  title = title.replace(/[^가-힣ㄱ-ㅎㅏ-ㅣa-zA-Z0-9]/gi, ' ')
+  title = title.replace(/우리말 *녹음/gi, ' ')
+  title = title.replace(/한글 *자막/gi, ' ')
   title = title.replace(/3D/g, '')
   title = title.replace(/\ +/g, ' ')
   title = title.replace(/\ $/g, '')
@@ -287,7 +306,7 @@ get_answer = (title)->
     else if c.match(/[0-9]/)
       answer_list.push(NUMBER_ANSWER[c])
     else if c.match(' ')
-      answer_list.push(c)
+      continue
     else if c.match(/[a-z]/i)
       answer_list.push(ALPHABET_ANSWER[c.toLowerCase()])
  
