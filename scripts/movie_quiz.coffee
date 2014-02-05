@@ -85,6 +85,7 @@ ALPHABET_ANSWER=
   z : '지'
 
 module.exports = (robot)->
+  gameDic = {}
   robot.respond /quiz update (\d{4}-\d{2}-\d{2}) ?(\d{4}-\d{2}-\d{2})?/i, (message)->
     message.send '네이버가 자주 접속하면 404를 줘서 60초에 한 주씩 업데이트하므로 매우 느립니다.'
     pg.connect(process.env.DATABASE_URL, (err, client, done)->
@@ -125,6 +126,44 @@ module.exports = (robot)->
           )
       )
     )
+
+  robot.respond /quiz start/i, (message)->
+    start_game(message)
+
+  robot.respond /quiz remind/i, (message)->
+    remind_game(message)
+
+  robot.respond /quiz hint/i, (message)->
+    hint(message)
+
+  robot.respond /quiz (.+)/i, (message)->
+    guess(message)
+
+class Game
+
+  constructor: (@title, @initials, @answer) ->
+    @hintLevel = 0
+
+  print_quiz: (message)->
+    if @hintLevel > 0
+      outInitials = @initials.replace(/\ /gi, '')
+    else
+      outInitials = @initials
+   message.send '영화 자음퀴즈'
+   message.send Array(outInitials.length + 5).join('+')
+   message.send '+ ' + outInitials + ' +'
+   message.send Array(outInitials.length + 5).join('+')
+
+start_game = (message)->
+  pg.connect process.env.DATABASE_URL, (err, client, done)->
+    return message.send err if err
+    client.query 'SELECT id, title, initials, answer FROM movies ORDER BY random() LIMIT 1', (err, result)->
+      message.send err if err
+      game = Game(result.title, result.initials, result.answer)
+      done()
+      room = message.message.user.room
+      gameDic[room] = game
+      game.print_quiz(message)
 
 
 convertE2U = (binary_euc)->
