@@ -14,6 +14,7 @@
 #   hubot quiz update <from>[ <to>]- update newest quiz (매우 무거움! 날짜는 YYYY-MM-dd 형식으로)
 #   hubot quiz start - start movie quiz 
 #   hubot quiz hint - get hint
+#   hubot quiz remind - remind quiz
 #   hubot quiz <answer> - guess the answer 
 #
 # Author:
@@ -130,7 +131,7 @@ module.exports = (robot)->
     start_game(message)
 
   robot.respond /quiz remind/i, (message)->
-    remind_game(message)
+    remind(message)
 
   robot.respond /quiz hint/i, (message)->
     hint(message)
@@ -222,7 +223,13 @@ guess = (message)->
   if isCorrect
     gameDic[room] = undefined
 
-  
+remind = (message)->
+  room = message.message.user.room
+  game = gameDic[room]
+  if not game
+    return message.send '진행중인 게임이 없습니다.'
+  game.print_quiz(message)
+
 
 convertE2U = (binary_euc)->
   buf = new Buffer(binary_euc.length)
