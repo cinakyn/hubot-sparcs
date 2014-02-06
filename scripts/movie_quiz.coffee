@@ -115,14 +115,15 @@ module.exports = (robot)->
     message.send 're-santizing...'
     pg.connect(process.env.DATABASE_URL, (err, client, done)->
       return message.send err if err
-      client.query('SELECT id, title FROM movies', (err, result)->
+      client.query('SELECT id, title, story FROM movies', (err, result)->
         for r in result.rows
           oriTitle = r.title
           id = r.id
           title = sanitize_title(oriTitle)
           initials = get_initials(title)
           answer = get_answer(title)
-          client.query("UPDATE movies SET title='" + title + "', initials='" + initials + "', answer='" + answer + "' WHERE id=" + id, (err, result)->
+          story = r.story.replace(/\&nbsp;/g, '\n')
+          client.query("UPDATE movies SET title='" + title + "', initials='" + initials + "', answer='" + answer + "', story='" + story + "'  WHERE id=" + id, (err, result)->
           )
       )
     )
@@ -374,7 +375,9 @@ parse_genre = (genre_dom)->
 
 escape_sql = (str)->
   if (str)
-    return str.replace(/'/g, "''")
+    result = str.replace(/\&nbsp;/g, '\n')
+    result = result.replace(/'/g, "''")
+    return result
   else
     str
 
