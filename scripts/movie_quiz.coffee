@@ -173,14 +173,17 @@ class Game
 
   guess: (message, guess_word)->
     if (guess_word.replace(/\ /gi, '') == @answer.replace(/\ /gi, ''))
-      message.send "\'\'\'"
-      message.send '짝짝짝'
-      message.send message.message.user.name + '님 정답입니다!'
-      message.send '정답 : ' + @title + '(' + @answer + ')'
-      message.send '장르 : ' + @genre
-      message.send '국가 : ' + @nation
-      message.send @story
-      message.send "\'\'\'"
+      str = [
+        "\'\'\'",
+        '짝짝짝',
+        message.message.user.name + '님 정답입니다!',
+        '정답 : ' + @title + '(' + @answer + ')',
+        '장르 : ' + @genre,
+        '국가 : ' + @nation,
+        @story,
+        "\'\'\'",
+      ].join('\n')
+      message.send str
       return true
     else
       message.send message.message.user.name + '님 오답입니다.'
