@@ -305,7 +305,7 @@ parse_rank_table = (body, message)->
         rank : rank
       #if m.reserve_per >= 9.0
       #  result.push(m)
-      if m.rank <= 20
+      if m.rank <= 10
         result.push(m)
   return result
 
