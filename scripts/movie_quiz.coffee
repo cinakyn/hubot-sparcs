@@ -25,7 +25,7 @@ HTMLParser  = require "htmlparser"
 Iconv       = require('iconv').Iconv
 pg          = require('pg')
 translatorE2U = new Iconv('euc-kr', 'utf-8')
-MOVIE_NAVER_URL = "http://movie.naver.com/movie/sdb/rank/rreserve.nhn?date="
+MOVIE_NAVER_URL = "http://movie.naver.com/movie/sdb/rank/rmovie.nhn?sel=cnt&tg=0&date="
 MOVIE_NAVER_DOMAIN = "http://movie.naver.com"
 NUMBER_INITIAL = ['ㅇ', 'ㅇ', 'ㅇ', 'ㅅ', 'ㅅ', 'ㅇ', 'ㅇ', 'ㅊ', 'ㅍ', 'ㄱ']
 NUMBER_ANSWER = ['영', '일', '이', '삼', '사', '오', '육', '칠', '팔', '구']
@@ -264,9 +264,24 @@ update_movie_quiz = (message)->
         .get() (err, response, body)->
           return message.send "http연결에 실패했습니다." + err if err 
           movie_list = parse_rank_table(body, message)
-          insert_movie_list_to_db(movie_list, message)
+          pg.connect process.env.DATABASE_URL, (err, client, done)->
+            return message.send err if err
+            client.query "SELECT title FROM movies WHERE title IN ('" + movie_list.map((elem)->return elem.title).join("', '") + "')", (err, result)->
+              return message.send err if err
+              exist_title = []
+              new_movie = []
+              for r in result.rows
+                exist_title.push(r.title.replace(/\ *$/gi, ''))
+              done()
+              for m in movie_list
+                if exist_title.indexOf(m.title) > 0
+                  continue
+                else
+                  new_movie.push(m)
+              insert_movie_list_to_db(new_movie, message)
       date = get_last_week(date)
-      setTimeout(loop_callback, 60000)
+      date = get_last_week(date) #2주씩 가자
+      setTimeout(loop_callback, 100000)
   loop_callback()
 
 parse_rank_table = (body, message)->
@@ -277,22 +292,30 @@ parse_rank_table = (body, message)->
   table_rows = Select(rank_table, 'tr')
   result = []
   for tr in table_rows
-    if Select(tr, 'td').length == 5
+    if Select(tr, 'td').length == 4
       link = MOVIE_NAVER_DOMAIN + Select(tr, '.title a')[0].attribs.href
-      reserve_per = Select(tr, '.reserve_per')[0].children[0].data.slice(0, -1)
-      title = convertE2U(Select(tr, '.title a')[0].attribs.title)
+      #reserve_per = Select(tr, '.reserve_per')[0].children[0].data.slice(0, -1)
+      reserve_per = 0
+      rank = Select(tr, '.ac img')[0].attribs.alt
+      title = sanitize_title(convertE2U(Select(tr, '.title a')[0].attribs.title))
       m = 
         link : link 
         title : title 
         reserve_per : reserve_per 
-      if m.reserve_per >= 9.0
+        rank : rank
+      #if m.reserve_per >= 9.0
+      #  result.push(m)
+      if m.rank <= 20
         result.push(m)
   return result
 
 insert_movie_list_to_db = (movie_list, message)->
+  if movie_list.length == 0
+    return
   result_list = []
   callback = (detail)->
-    result_list.push(detail)
+    if (detail)
+      result_list.push(detail)
     if (movie_list.length > 0)
       get_movie_detail(movie_list.pop(), message, callback)
     else
@@ -318,13 +341,10 @@ insert_movie_list_to_db = (movie_list, message)->
             if counter == 0
               message.send "done!"
               done()
-            else
-              message.send counter + "left"
             if err
               if (err.code != "23505")
                 message.send JSON.stringify(err, null, '\t')
               return
-#message.send JSON.stringify(result, null, '\t')
           )
       )
   get_movie_detail(movie_list.pop(), message, callback)
@@ -334,18 +354,22 @@ get_movie_detail = (movie, message, callback)->
     return message.send "http연결에 실패했습니다." + err if err
 
     detail = parse_movie(body)
-    detail.reserve_per = movie.reserve_per
-    detail.title = sanitize_title(movie.title)
-    detail.initials = get_initials(detail.title)
-    detail.answer = get_answer(detail.title)
+    if (detail)
+      detail.reserve_per = movie.reserve_per
+      detail.title = sanitize_title(movie.title)
+      detail.initials = get_initials(detail.title)
+      detail.answer = get_answer(detail.title)
     temp = ()->
       callback(detail)
-    setTimeout(temp, 10000)
+    setTimeout(temp, 5000)
 
 parse_movie = (body)->
   html_handler = new HTMLParser.DefaultHandler((()->), ignoreWhitespace: true)
   html_parser = new HTMLParser.Parser html_handler
   html_parser.parseComplete body
+  isBeforeOpen = Select(html_handler.dom, '.ntz_b').length >0
+  if (isBeforeOpen)
+    return null
   info_spec = Select(html_handler.dom, '.info_spec')[0]
   genre = parse_genre(info_spec.children[0])
   nation = Select(info_spec.children[1], 'a')[0].children[0].data
