@@ -193,8 +193,9 @@ class Game
 start_game = (message)->
   pg.connect process.env.DATABASE_URL, (err, client, done)->
     return message.send err if err
-    client.query 'SELECT * FROM movies ORDER BY random() LIMIT 1', (err, result)->
+    client.query 'SELECT * FROM movies ORDER BY random() LIMIT 200', (err, result)->
       message.send err if err
+      row = result.rows[Math.floor(Math.random() * result.rows.length)]
       game = new Game(
         result.rows[0].title.replace(/\ *$/gi, ''),
         result.rows[0].initials.replace(/\ *$/gi, ''),
