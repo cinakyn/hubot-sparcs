@@ -180,7 +180,6 @@ class Game
         '정답 : ' + @title + '(' + @answer + ')',
         '장르 : ' + @genre,
         '국가 : ' + @nation,
-        @story,
         "\'\'\'",
       ].join('\n')
       message.send str
