@@ -23,7 +23,7 @@ Iconv       = require('iconv').Iconv
 pg          = require('pg')
 gameDic = {}
 WORD_SRC = "http://wordbook.daum.net/user/info.do?userid=bI3zBpnFVAU.&page="
-WORD_SRC_PAGES = [1..10]
+WORD_SRC_PAGES = [5..10]
 
 module.exports = (robot)->
   robot.respond /hangman make db/i, (message)->
@@ -49,16 +49,18 @@ makeDB = (message)->
       url = WORD_SRC + i
       message.http(url).get() (err, response, body)->
         return message.send "http연결에 실패했습니다." + err if err
-        parseWordbookList(message, body)
+        parseWordbookList(message, i, body)
     setTimeout(f, i * 20000)
 
-parseWordbookList = (message, body)->
+parseWordbookList = (message, i, body)->
   html_handler = new HTMLParser.DefaultHandler((()->), ignoreWhitespace: true)
   html_parser = new HTMLParser.Parser html_handler
   html_parser.parseComplete body
   anchor_list = Select(html_handler.dom, '.td_book a')
   count = anchor_list.length
   loop_count = 0
+  if i == 5
+    loop_count = 7
   sub_loop = ()->
     if (loop_count < count)
       anchor = anchor_list[loop_count]
