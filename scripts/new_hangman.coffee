@@ -33,7 +33,7 @@ module.exports = (robot)->
         '''
           CREATE TABLE IF NOT EXISTS words(
             id            SERIAL PRIMARY KEY,
-            word          CHAR(60),
+            word          CHAR(60) UNIQUE,
             mean          CHAR(100)
           )
         ''',
@@ -50,7 +50,7 @@ makeDB = (message)->
       message.http(url).get() (err, response, body)->
         return message.send "http연결에 실패했습니다." + err if err
         parseWordbookList(message, i, body)
-    setTimeout(f, i * 20000)
+    setTimeout(f, i - WORD_SRC_PAGES[0] * 20000)
 
 parseWordbookList = (message, i, body)->
   html_handler = new HTMLParser.DefaultHandler((()->), ignoreWhitespace: true)
@@ -72,6 +72,7 @@ parseWordbookList = (message, i, body)->
   sub_loop()
 
 requestWordbookPage = (message, wordbook_url, page)->
+  message.send wordbook_url + '&page=' + page
   message.http(wordbook_url + '&page=' + page).get() (err, response, body)->
     return message.send "http연결에 실패했습니다." + err if err
     parseWordbookPage message, body, page, ()->
@@ -91,7 +92,6 @@ parseWordbookPage = (message, body, page, callback)->
     for w in word_list
       word = Select(w, '.link_wordbook')[0].children[0].data
       mean = Select(w, '.link_mean')[0].children[0].data
-      message.send word
       client.query "INSERT INTO words (word, mean) VALUES ('" + word + "', '" + mean + "')", (err, result)->
         count -= 1
         if count == 0
