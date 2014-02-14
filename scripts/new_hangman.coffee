@@ -53,7 +53,9 @@ makeDB = (message)->
       return message.send "http연결에 실패했습니다." + err if err
       message.send '(parseWordbook)' + url
       parseWordbookList(message, WORD_SRC_PAGES[i], body)
-  setTimeout(f, i * 20000)
+    i += 1
+    setTimeout(f, 200000)
+  f()
 
 parseWordbookList = (message, i, body)->
   html_handler = new HTMLParser.DefaultHandler((()->), ignoreWhitespace: true)
