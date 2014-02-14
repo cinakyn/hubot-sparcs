@@ -44,13 +44,16 @@ module.exports = (robot)->
       )
 
 makeDB = (message)->
-  for i in WORD_SRC_PAGES
-    f = ()->
-      url = WORD_SRC + i
-      message.http(url).get() (err, response, body)->
-        return message.send "http연결에 실패했습니다." + err if err
-        parseWordbookList(message, i, body)
-    setTimeout(f, i - WORD_SRC_PAGES[0] * 20000)
+  i = 0
+  f = ()->
+    if i >= WORD_SRC_PAGES.length
+      return
+    url = WORD_SRC + WORD_SRC_PAGES[i]
+    message.http(url).get() (err, response, body)->
+      return message.send "http연결에 실패했습니다." + err if err
+      message.send '(parseWordbook)' + url
+      parseWordbookList(message, WORD_SRC_PAGES[i], body)
+  setTimeout(f, i * 20000)
 
 parseWordbookList = (message, i, body)->
   html_handler = new HTMLParser.DefaultHandler((()->), ignoreWhitespace: true)
@@ -72,7 +75,7 @@ parseWordbookList = (message, i, body)->
   sub_loop()
 
 requestWordbookPage = (message, wordbook_url, page)->
-  message.send wordbook_url + '&page=' + page
+  message.send '(request page)' + wordbook_url + '&page=' + page
   message.http(wordbook_url + '&page=' + page).get() (err, response, body)->
     return message.send "http연결에 실패했습니다." + err if err
     parseWordbookPage message, body, page, ()->
