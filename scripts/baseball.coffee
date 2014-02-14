@@ -71,7 +71,7 @@ guess = (message) ->
   result = game.guess(message.match[1], message)
   if result.strike == 3
     elapsedTime = ((new Date()).getTime() - game.startTime.getTime()) / 1000
-    message.send '축하합니다, 승리하셨습니다! (총 시도 횟수 : ' + game.guessCount + '회, 걸린 시간 : ' + elapsedTime + '초)'
+    message.send message.message.user.name + '님 축하합니다, 승리하셨습니다! (총 시도 횟수 : ' + game.guessCount + '회, 걸린 시간 : ' + elapsedTime + '초)'
     gameDic[room] = undefined
   else if result.strike < 0
     message.send '서로 다른 3개의 숫자만 유효합니다.'
