@@ -217,6 +217,7 @@ class Game
 
   strStatus: ()->
     result = ''
+    '''
     if @remainChances == 8
       result += STATUS_8
     else if @remainChances == 7
@@ -234,6 +235,9 @@ class Game
     else if @remainChances == 1
       result += STATUS_1
     else if @remainChances == 0
+      result += STATUS_0
+    '''
+    if @remainChances == 0
       result += STATUS_0
     status = []
     for w, i in @wordArr
