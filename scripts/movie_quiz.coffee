@@ -196,14 +196,14 @@ start_game = (message)->
       message.send err if err
       row = result.rows[Math.floor(Math.random() * result.rows.length)]
       game = new Game(
-        result.rows[0].title.replace(/\ *$/gi, ''),
-        result.rows[0].initials.replace(/\ *$/gi, ''),
-        result.rows[0].answer.replace(/\ *$/gi, '')
-        result.rows[0].reserve_per
-        result.rows[0].nation.replace(/\ *$/gi, '')
-        result.rows[0].genre.replace(/\ *$/gi, '')
-        result.rows[0].photo.replace(/\ *$/gi, '')
-        result.rows[0].story.replace(/\ *$/gi, '')
+        row.title.replace(/\ *$/gi, ''),
+        row.initials.replace(/\ *$/gi, ''),
+        row.answer.replace(/\ *$/gi, '')
+        row.reserve_per
+        row.nation.replace(/\ *$/gi, '')
+        row.genre.replace(/\ *$/gi, '')
+        row.photo.replace(/\ *$/gi, '')
+        row.story.replace(/\ *$/gi, '')
       )
       done()
       room = message.message.user.room
