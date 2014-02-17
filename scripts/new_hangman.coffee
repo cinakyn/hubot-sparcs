@@ -128,8 +128,8 @@ class Game
       if @openStatus[i]
         status.push(@wordArr[i])
       else
-        status.push('_')
-    result += status.join('|')
+        status.push('＿')
+    result += status.join('')
     result += '\n'
     return result
 
