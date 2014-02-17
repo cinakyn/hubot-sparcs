@@ -197,7 +197,7 @@ class Game
         message.send '이 단어는 ' + c + '를 포함하고 있지 않습니다. 당신의 친구가 죽어갑니다.(남은 기회 ' + @remainChances + '번)\n' + @strStatus()
         return false
       else
-        message.send '당신의 친구가 죽었습니다. 정답은 ' + @word + '입니다.'
+        message.send '당신의 친구가 죽었습니다. 정답은 ' + @word + '입니다.\n' + @strStatus()
         return true
 
 
@@ -212,7 +212,7 @@ class Game
         message.send '정답이 아닙니다. 당신의 친구가 죽어갑니다.(남은 기회 ' + @remainChances + '번)\n' + @strStatus()
         return false
       else
-        message.send '당신의 친구가 죽었습니다. 정답은 ' + @word + '입니다.'
+        message.send '당신의 친구가 죽었습니다. 정답은 ' + @word + '입니다.\n' + @strStatus()
         return true
 
   strStatus: ()->
@@ -261,7 +261,6 @@ start_game = (message)->
       str = game.strStatus(message)
       str += game.mean
       message.send str
-      message.send game.word
 
 guessWord = (message)->
   room = message.message.user.room
