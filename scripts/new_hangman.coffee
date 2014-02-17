@@ -186,7 +186,7 @@ class Game
         if @wordArr[i] == c
           @openStatus[i] = true
       if @checkEnd()
-        message.send user + '님 축하합니다. 마지막 글자를 맞추셨습니다!\n' + @strStatus()
+        message.send user + '님 축하합니다. 마지막 글자를 맞추셨습니다!\n' + @mean
         return true
       else
         message.send '네! 이 단어는 ' + c + '를 포함하고 있습니다.\n' + @strStatus()
@@ -204,7 +204,7 @@ class Game
   guessWord: (message, guessWord)->
     user = message.message.user.name
     if @cleanWord(guessWord) == @cleanWord(@word)
-      message.send user + '님 축하합니다. 정답을 맞추셨습니다!'
+      message.send user + '님 축하합니다. 정답을 맞추셨습니다!\n' + @mean
       return true
     else
       @remainChances -= 1
