@@ -59,7 +59,7 @@ module.exports = (robot)->
   robot.respond /hangman ([a-z])$/i, (message)->
     guessWord(message)
 
-  robot.respond /hangman (.{2,})$/i, (message)->
+  robot.respond /hangman ((?!start).{2,})$/i, (message)->
     guessWord(message)
 
 class Game
@@ -129,7 +129,7 @@ class Game
         status.push(@wordArr[i])
       else
         status.push('_')
-    result += status.join('')
+    result += status.join('|')
     result += '\n'
     return result
 
