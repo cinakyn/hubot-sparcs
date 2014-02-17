@@ -33,6 +33,7 @@ STATUS_1 = '''
 .    |      / \\
 .    |
 .__|___
+\n\n
 '''
 
 module.exports = (robot)->
