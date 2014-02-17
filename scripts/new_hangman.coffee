@@ -208,8 +208,12 @@ class Game
       return true
     else
       @remainChances -= 1
-      message.send '정답이 아닙니다. 당신의 친구가 죽어갑니다.(남은 기회 ' + @remainChances + '번)\n' + @strStatus()
-      return false
+      if @remainChances > 0
+        message.send '정답이 아닙니다. 당신의 친구가 죽어갑니다.(남은 기회 ' + @remainChances + '번)\n' + @strStatus()
+        return false
+      else
+        message.send '당신의 친구가 죽었습니다. 정답은 ' + @word + '입니다.'
+        return true
 
   strStatus: ()->
     result = ''
