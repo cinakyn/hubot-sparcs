@@ -24,6 +24,83 @@ pg          = require('pg')
 gameDic = {}
 WORD_SRC = "http://wordbook.daum.net/user/info.do?userid=bI3zBpnFVAU.&page="
 WORD_SRC_PAGES = [5..10]
+STATUS_8 = '''
+.            
+.    |        
+.    |         
+.    |          
+.    |         
+.    |          
+.    |
+.__|___
+\n
+'''
+STATUS_7 = '''
+.     _______
+.    |/       
+.    |         
+.    |          
+.    |         
+.    |          
+.    |
+.__|___
+\n
+'''
+STATUS_6 = '''
+.     _______
+.    |/      |
+.    |      (_)
+.    |          
+.    |         
+.    |          
+.    |
+.__|___
+\n
+'''
+STATUS_5 = '''
+.     _______
+.    |/      |
+.    |      (_)
+.    |        | 
+.    |        |
+.    |          
+.    |
+.__|___
+\n
+'''
+STATUS_4 = '''
+.     _______
+.    |/      |
+.    |      (_)
+.    |      \\| 
+.    |        |
+.    |          
+.    |
+.__|___
+\n
+'''
+STATUS_3 = '''
+.     _______
+.    |/      |
+.    |      (_)
+.    |      \\|/
+.    |        |
+.    |          
+.    |
+.__|___
+\n
+'''
+STATUS_2 = '''
+.     _______
+.    |/      |
+.    |      (_)
+.    |      \\|/
+.    |        |
+.    |      /   
+.    |
+.__|___
+\n
+'''
 STATUS_1 = '''
 .     _______
 .    |/      |
@@ -33,7 +110,18 @@ STATUS_1 = '''
 .    |      / \\
 .    |
 .__|___
-\n\n
+\n
+'''
+STATUS_0 = '''
+.     _______
+.    |/      |
+.    |     (x_x)
+.    |      \\|/
+.    |        |
+.    |      / \\
+.    |
+.__|___
+\n
 '''
 
 module.exports = (robot)->
@@ -59,14 +147,17 @@ module.exports = (robot)->
   robot.respond /hangman ([a-z])$/i, (message)->
     guessWord(message)
 
-  robot.respond /hangman ((?!start).{2,})$/i, (message)->
+  robot.respond /hangman ((?!start|remind).{2,})$/i, (message)->
     guessWord(message)
+
+  robot.respond /hangman remind$/i, (message)->
+    remind(message)
 
 class Game
   constructor: (@word, @mean)->
     @openedCharacter = []
     @wordArr = @word.split('')
-    @remainChances = 9
+    @remainChances = 8
     @openStatus = []
     for c in @wordArr
       if c.match(/[a-z]/i)
@@ -122,7 +213,24 @@ class Game
 
   strStatus: ()->
     result = ''
-    result += STATUS_1
+    if @remainChances == 8
+      result += STATUS_8
+    else if @remainChances == 7
+      result += STATUS_7
+    else if @remainChances == 6
+      result += STATUS_6
+    else if @remainChances == 5
+      result += STATUS_5
+    else if @remainChances == 4
+      result += STATUS_4
+    else if @remainChances == 3
+      result += STATUS_3
+    else if @remainChances == 2
+      result += STATUS_2
+    else if @remainChances == 1
+      result += STATUS_1
+    else if @remainChances == 0
+      result += STATUS_0
     status = []
     for w, i in @wordArr
       if @openStatus[i]
@@ -160,6 +268,11 @@ guessWord = (message)->
     end = game.guessCharacter(message, message.match[1])
   if end
     gameDic[roo] = undefined
+
+remind = (message)->
+  room = message.message.user.room
+  game = gameDic[room]
+  message.send game.strStatus() + game.mean
 
 makeDB = (message)->
   i = 0
