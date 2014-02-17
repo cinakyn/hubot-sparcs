@@ -25,14 +25,14 @@ gameDic = {}
 WORD_SRC = "http://wordbook.daum.net/user/info.do?userid=bI3zBpnFVAU.&page="
 WORD_SRC_PAGES = [5..10]
 STATUS_1 = '''
-      _______
-     |/      |
-     |      (_)
-     |      \\|/
-     |       |
-     |      / \\
-     |
-   __|___
+.     _______
+.    |/      |
+.    |      (_)
+.    |      \\|/
+.    |        |
+.    |      / \\
+.    |
+.  __|___
 '''
 
 module.exports = (robot)->
