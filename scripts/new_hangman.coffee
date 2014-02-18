@@ -269,6 +269,9 @@ start_game = (message)->
 guessWord = (message)->
   room = message.message.user.room
   game = gameDic[room]
+  if !game
+    message.send '진행중인 게임이 없습니다.'
+    return
   if message.match[1].length > 1
     end = game.guessWord(message, message.match[1])
   else 
