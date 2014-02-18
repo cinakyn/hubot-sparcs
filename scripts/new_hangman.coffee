@@ -186,7 +186,7 @@ class Game
         if @wordArr[i] == c
           @openStatus[i] = true
       if @checkEnd()
-        message.send user + '님 축하합니다. 마지막 글자를 맞추셨습니다!\n' + @mean
+        message.send user + '님 축하합니다. 마지막 글자를 맞추셨습니다!\n' + @word + '\n' + @mean
         return true
       else
         message.send '네! 이 단어는 ' + c + '를 포함하고 있습니다.\n' + @strStatus()
@@ -274,7 +274,7 @@ guessWord = (message)->
   else 
     end = game.guessCharacter(message, message.match[1])
   if end
-    gameDic[roo] = undefined
+    gameDic[room] = undefined
 
 remind = (message)->
   room = message.message.user.room
